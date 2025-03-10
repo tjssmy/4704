@@ -11,7 +11,7 @@ dx = L/N;            % Spatial step size
 x = 0:dx:L-dx;  % Spatial coordinate array
 
 % Wave function parameters
-sigma = 5;           % Gaussian width (spatial spread)
+sigma = 10;           % Gaussian width (spatial spread)
 k0 = 0.5;           % Central wave number (modulation frequency)
 A = 1;              % Amplitude
 x0 = 30;           % Spatial offset
@@ -126,6 +126,7 @@ end
 
 disp('Animation complete. GIF file saved as wave_reconstruction.gif');
 
+%%
 % Additional parameters for proper phase propagation
 t_max = 50;          % Total time for animation
 n_frames = 100;      % Number of frames
@@ -205,3 +206,69 @@ disp('Propagation animation complete. GIF file saved as wave_propagation.gif');
 k_center = k0;  % Central wave number
 vg = (hbar * k_center) / m;  % Group velocity: dω/dk = ħk/m
 disp(['Calculated group velocity: ' num2str(vg)]);
+
+%%
+% Finite Difference Propagation Parameters
+t_max = 50;          % Total time
+n_frames = 100;      % Number of frames
+dt = t_max/n_frames; % Time step
+m = 1;              % Mass
+hbar = 1;           % Reduced Planck's constant
+alpha = 1i * hbar * dt / (2 * m * dx^2);  % Coefficient for finite difference
+
+% Tridiagonal matrix coefficients
+a = -alpha;          % Off-diagonal terms
+b = 1 + 2*alpha;     % Diagonal term (left-hand side)
+c = -alpha;
+A = diag(b*ones(N,1)) + diag(a*ones(N-1,1),1) + diag(c*ones(N-1,1),-1); % Left-hand side matrix
+A(1,N) = c; A(N,1) = a;  % Periodic boundary conditions
+
+% Right-hand side matrix (explicit part)
+B = diag((1 - 2*alpha)*ones(N,1)) + diag(-a*ones(N-1,1),1) + diag(-c*ones(N-1,1),-1);
+B(1,N) = -a; B(N,1) = -c;  % Periodic boundary conditions
+
+% Initial wave function
+psi_t = psi.';  % From original Gaussian wave packet
+
+% Prepare figure
+figure('Position', [100 100 600 400]);
+h_mag = plot(x, abs(psi_t), 'b-', 'LineWidth', 1.5);
+hold on;
+h_real = plot(x, real(psi_t), 'r--', 'LineWidth', 1);
+h_imag = plot(x, imag(psi_t), 'g--', 'LineWidth', 1);
+hold off;
+grid on;
+xlabel('Position (x)');
+ylabel('Amplitude');
+title('Propagating Gaussian Wave Packet (Finite Difference)');
+legend('Magnitude', 'Real', 'Imaginary');
+axis([min(x) max(x) -1.5 1.5]);
+set(gcf, 'Color', 'white');
+
+% Animation
+filename_fd = 'wave_propagation_fd.gif';
+for n = 1:n_frames
+    t = (n-1)*dt;
+    
+    % Solve tridiagonal system: A * psi(t+dt) = B * psi(t)
+    psi_t = A \ (B * psi_t);
+    
+    % Update plot
+    set(h_mag, 'YData', abs(psi_t));
+    set(h_real, 'YData', real(psi_t));
+    set(h_imag, 'YData', imag(psi_t));
+    title(['Propagating Gaussian Wave Packet (t = ' num2str(t, '%.1f') ')']);
+    drawnow;
+    
+    % Capture frame for GIF
+    frame = getframe(gcf);
+    im = frame2im(frame);
+    [imind, cm] = rgb2ind(im, 256);
+    if n == 1
+        imwrite(imind, cm, filename_fd, 'gif', 'Loopcount', inf, 'DelayTime', 0.05);
+    else
+        imwrite(imind, cm, filename_fd, 'gif', 'WriteMode', 'append', 'DelayTime', 0.05);
+    end
+end
+
+disp('Finite difference propagation complete. GIF saved as wave_propagation_fd.gif');
