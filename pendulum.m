@@ -56,7 +56,7 @@ for n = 1:N
 end
 
 % Compute positions for animation
-x1_vec = l1 * sin(theta1_vec);
+x1_vec = l1 * sin(theta1_vec);l
 y1_vec = -l1 * cos(theta1_vec);
 x2_vec = x1_vec + l2 * sin(theta2_vec);
 y2_vec = y1_vec - l2 * cos(theta2_vec);
