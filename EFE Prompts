@@ -1,7 +1,0 @@
-EFE Prompts
-
-1) Develop an Eigenfunction Expansion solution for a 2D electromagnetic problem with a plane wave incident on a perfectly conducting cylinder of radius b centered at (0,0). The polarization is for Ez. Use a cylindrical coordinate system in r,phi and z.
-
-2) Create three plots using subplot for 1) the incident field (real part), 2) Scattered fields (real part), 3) Total fields (real part).
-
-3) Set the aspect ratio of the plots to that of the region. And save the figure as png.

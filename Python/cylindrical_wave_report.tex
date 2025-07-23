@@ -1,0 +1,209 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\geometry{margin=1in}
+
+\title{2D Harmonic Wave Equation in Cylindrical Coordinates \\
+       Using Finite Difference Method}
+\author{Course 4704}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Problem Statement}
+
+We solve the two-dimensional harmonic wave equation in cylindrical coordinates $(r, \phi)$ on a circular domain of radius $R$:
+
+\begin{align}
+\nabla^2 u &= -k^2 u \quad \text{in } 0 \leq r < R, \, 0 \leq \phi \leq 2\pi \label{eq:wave} \\
+u(R, \phi) &= 0 \quad \text{for all } \phi \label{eq:bc}
+\end{align}
+
+This is an eigenvalue problem where we seek eigenvalues $k^2$ and corresponding eigenfunctions $u(r,\phi)$.
+
+\section{Mathematical Formulation}
+
+\subsection{Laplacian in Cylindrical Coordinates}
+
+The Laplacian operator in cylindrical coordinates is:
+\begin{equation}
+\nabla^2 u = \frac{1}{r}\frac{\partial}{\partial r}\left(r \frac{\partial u}{\partial r}\right) + \frac{1}{r^2}\frac{\partial^2 u}{\partial \phi^2} \label{eq:laplacian}
+\end{equation}
+
+Substituting into equation (\ref{eq:wave}):
+\begin{equation}
+\frac{1}{r}\frac{\partial}{\partial r}\left(r \frac{\partial u}{\partial r}\right) + \frac{1}{r^2}\frac{\partial^2 u}{\partial \phi^2} = -k^2 u \label{eq:full_pde}
+\end{equation}
+
+\subsection{Separation of Variables}
+
+We assume a solution of the form:
+\begin{equation}
+u(r,\phi) = R(r) \Phi(\phi) \label{eq:separation}
+\end{equation}
+
+Substituting into equation (\ref{eq:full_pde}) and separating variables:
+\begin{equation}
+\frac{r}{R}\frac{d}{dr}\left(r \frac{dR}{dr}\right) + r^2 k^2 = -\frac{1}{\Phi}\frac{d^2\Phi}{d\phi^2} = m^2 \label{eq:separated}
+\end{equation}
+
+where $m^2$ is the separation constant.
+
+\subsection{Angular Equation}
+
+The angular equation is:
+\begin{equation}
+\frac{d^2\Phi}{d\phi^2} + m^2 \Phi = 0 \label{eq:angular}
+\end{equation}
+
+For periodic boundary conditions $\Phi(\phi + 2\pi) = \Phi(\phi)$, we require $m$ to be an integer. The solutions are:
+\begin{equation}
+\Phi_m(\phi) = \begin{cases}
+A_m \cos(m\phi) + B_m \sin(m\phi) & \text{for } m > 0 \\
+A_0 & \text{for } m = 0
+\end{cases} \label{eq:angular_sol}
+\end{equation}
+
+\subsection{Radial Equation}
+
+The radial equation becomes:
+\begin{equation}
+\frac{1}{r}\frac{d}{dr}\left(r \frac{dR}{dr}\right) + \left(k^2 - \frac{m^2}{r^2}\right)R = 0 \label{eq:radial}
+\end{equation}
+
+This is Bessel's equation of order $m$. The general solution is:
+\begin{equation}
+R(r) = C_1 J_m(kr) + C_2 Y_m(kr) \label{eq:bessel_general}
+\end{equation}
+
+where $J_m$ and $Y_m$ are Bessel functions of the first and second kind, respectively.
+
+\subsection{Boundary Conditions}
+
+\subsubsection{Regularity at Origin}
+Since $Y_m(kr) \to -\infty$ as $r \to 0$, we must have $C_2 = 0$ to ensure the solution is finite at the origin.
+
+\subsubsection{Boundary Condition at $r = R$}
+The condition $u(R,\phi) = 0$ requires:
+\begin{equation}
+R(R) = C_1 J_m(kR) = 0 \label{eq:bc_radial}
+\end{equation}
+
+For non-trivial solutions, we need $J_m(kR) = 0$, which gives us the eigenvalues:
+\begin{equation}
+k_{mn} = \frac{\alpha_{mn}}{R} \label{eq:eigenvalues}
+\end{equation}
+
+where $\alpha_{mn}$ is the $n$-th positive zero of the Bessel function $J_m(x)$.
+
+\section{Complete Solution}
+
+The complete eigenfunction solutions are:
+\begin{align}
+u_{mn}^c(r,\phi) &= J_m\left(\frac{\alpha_{mn}}{R} r\right) \cos(m\phi) \label{eq:cosine_modes} \\
+u_{mn}^s(r,\phi) &= J_m\left(\frac{\alpha_{mn}}{R} r\right) \sin(m\phi) \label{eq:sine_modes}
+\end{align}
+
+for $m > 0$, and
+\begin{equation}
+u_{0n}(r,\phi) = J_0\left(\frac{\alpha_{0n}}{R} r\right) \label{eq:axisymmetric_modes}
+\end{equation}
+
+for $m = 0$ (axisymmetric modes).
+
+\section{Finite Difference Discretization}
+
+\subsection{Grid Setup}
+
+We discretize the domain using:
+\begin{align}
+r_i &= i \cdot \Delta r, \quad i = 0, 1, \ldots, N_r-1, \quad \Delta r = \frac{R}{N_r-1} \\
+\phi_j &= j \cdot \Delta \phi, \quad j = 0, 1, \ldots, N_\phi-1, \quad \Delta \phi = \frac{2\pi}{N_\phi}
+\end{align}
+
+\subsection{Mode-by-Mode Solution}
+
+For each azimuthal mode number $m$, the problem reduces to a 1D radial eigenvalue problem:
+\begin{equation}
+\frac{1}{r}\frac{d}{dr}\left(r \frac{dR}{dr}\right) - \frac{m^2}{r^2}R = -k^2 R \label{eq:radial_eigenvalue}
+\end{equation}
+
+\subsection{Finite Difference Approximation}
+
+For interior points $r_i$ (excluding $r = 0$ and $r = R$), we discretize:
+\begin{align}
+\frac{1}{r_i}\frac{d}{dr}\left(r \frac{dR}{dr}\right)\bigg|_{r=r_i} &\approx \frac{1}{r_i} \cdot \frac{r_{i+1/2} \frac{R_{i+1} - R_i}{\Delta r} - r_{i-1/2} \frac{R_i - R_{i-1}}{\Delta r}}{\Delta r} \\
+&\approx \frac{1}{(\Delta r)^2} \left[\left(1 + \frac{1}{2i}\right) R_{i+1} - 2R_i + \left(1 - \frac{1}{2i}\right) R_{i-1}\right]
+\end{align}
+
+The discretized eigenvalue equation becomes:
+\begin{equation}
+\left[\left(1 + \frac{1}{2i}\right) R_{i+1} - 2R_i + \left(1 - \frac{1}{2i}\right) R_{i-1}\right] - m^2 \frac{(\Delta r)^2}{r_i^2} R_i = -k^2 (\Delta r)^2 R_i
+\end{equation}
+
+\subsection{Matrix Formulation}
+
+This leads to the generalized eigenvalue problem:
+\begin{equation}
+\mathbf{A} \mathbf{R} = \lambda \mathbf{R} \label{eq:matrix_eigenvalue}
+\end{equation}
+
+where $\lambda = k^2$ and $\mathbf{A}$ is the discretized differential operator.
+
+\section{Boundary Conditions Implementation}
+
+\subsection{Regularity at $r = 0$}
+For $m = 0$: Use symmetry condition $\frac{dR}{dr}|_{r=0} = 0$
+
+For $m > 0$: Set $R(0) = 0$ since $J_m(0) = 0$ for $m > 0$
+
+\subsection{Dirichlet Condition at $r = R$}
+Simply impose $R(R) = 0$ by excluding the boundary point from the eigenvalue problem.
+
+\section{Numerical Implementation}
+
+The algorithm consists of:
+
+\begin{enumerate}
+\item For each azimuthal mode number $m = 0, 1, 2, \ldots$
+\item Construct the finite difference matrix $\mathbf{A}$ for the radial problem
+\item Solve the eigenvalue problem to find $k_{mn}^2$ and $R_{mn}(r)$
+\item Construct 2D modes: $u_{mn}(r,\phi) = R_{mn}(r) \times [\cos(m\phi) \text{ or } \sin(m\phi)]$
+\item Compare with analytical eigenvalues $k_{mn} = \alpha_{mn}/R$
+\end{enumerate}
+
+\section{Results and Validation}
+
+The numerical method produces eigenvalues that converge to the analytical values as the grid is refined. The eigenmodes exhibit the characteristic patterns:
+
+\begin{itemize}
+\item $(m,n) = (0,1), (0,2), \ldots$: Axisymmetric modes with radial variations
+\item $(m,n) = (1,1), (1,2), \ldots$: Dipole-like patterns
+\item $(m,n) = (2,1), (2,2), \ldots$: Quadrupole-like patterns
+\item Higher $m$: More complex azimuthal variations
+\end{itemize}
+
+\section{Applications}
+
+This formulation applies to:
+\begin{itemize}
+\item Vibrating circular membranes (drums)
+\item Electromagnetic modes in circular waveguides
+\item Acoustic resonances in cylindrical cavities
+\item Heat conduction in circular domains
+\end{itemize}
+
+\section{Conclusion}
+
+The finite difference method successfully captures the physics of wave propagation in cylindrical domains. The separation of variables approach combined with mode-by-mode solution provides an efficient computational strategy while maintaining physical insight into the wave patterns.
+
+\end{document}
