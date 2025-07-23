@@ -1,0 +1,192 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\geometry{margin=1in}
+
+% Code listing settings
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny
+}
+
+\title{One-Dimensional Laplace Equation Solution \\
+       Using Finite Difference Method}
+\author{Course 4704}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Problem Statement}
+
+We seek to solve the one-dimensional Laplace equation for the function $u(x)$ on the domain $x \in [0, L]$ with mixed boundary conditions:
+
+\begin{align}
+\frac{d^2u}{dx^2} &= 0 \quad \text{for } x \in (0, L) \label{eq:laplace} \\
+\frac{du}{dx}\bigg|_{x=0} &= 2 \quad \text{(Neumann boundary condition)} \label{eq:bc1} \\
+u(L) &= 0 \quad \text{(Dirichlet boundary condition)} \label{eq:bc2}
+\end{align}
+
+\section{Analytical Solution}
+
+The general solution to the one-dimensional Laplace equation (\ref{eq:laplace}) is:
+\begin{equation}
+u(x) = Ax + B
+\end{equation}
+
+where $A$ and $B$ are constants to be determined from the boundary conditions.
+
+Applying the Neumann boundary condition (\ref{eq:bc1}):
+\begin{equation}
+\frac{du}{dx} = A = 2
+\end{equation}
+
+Therefore, $A = 2$.
+
+Applying the Dirichlet boundary condition (\ref{eq:bc2}):
+\begin{equation}
+u(L) = 2L + B = 0
+\end{equation}
+
+Therefore, $B = -2L$.
+
+The analytical solution is:
+\begin{equation}
+u(x) = 2x - 2L = 2(x - L) \label{eq:analytical}
+\end{equation}
+
+We can verify this solution satisfies both boundary conditions:
+\begin{align}
+\frac{du}{dx}\bigg|_{x=0} &= 2 \quad \checkmark \\
+u(L) &= 2(L - L) = 0 \quad \checkmark
+\end{align}
+
+\section{Finite Difference Method}
+
+\subsection{Grid Discretization}
+
+We discretize the domain $[0, L]$ into $N$ equally spaced grid points:
+\begin{equation}
+x_i = i \cdot \Delta x, \quad i = 0, 1, 2, \ldots, N-1
+\end{equation}
+
+where $\Delta x = \frac{L}{N-1}$ is the grid spacing.
+
+\subsection{Finite Difference Approximations}
+
+For interior points ($i = 1, 2, \ldots, N-2$), we use the central difference approximation for the second derivative:
+\begin{equation}
+\frac{d^2u}{dx^2}\bigg|_{x=x_i} \approx \frac{u_{i+1} - 2u_i + u_{i-1}}{(\Delta x)^2} = 0
+\end{equation}
+
+This gives us the discretized equation:
+\begin{equation}
+u_{i-1} - 2u_i + u_{i+1} = 0 \label{eq:interior}
+\end{equation}
+
+\subsection{Boundary Condition Implementation}
+
+\subsubsection{Neumann Boundary Condition at $x = 0$}
+
+At the left boundary ($i = 0$), we implement the Neumann condition $\frac{du}{dx}|_{x=0} = 2$ using a forward difference approximation:
+\begin{equation}
+\frac{du}{dx}\bigg|_{x=0} \approx \frac{u_1 - u_0}{\Delta x} = 2
+\end{equation}
+
+Rearranging:
+\begin{equation}
+-u_0 + u_1 = 2\Delta x \label{eq:neumann}
+\end{equation}
+
+\subsubsection{Dirichlet Boundary Condition at $x = L$}
+
+At the right boundary ($i = N-1$), we simply impose:
+\begin{equation}
+u_{N-1} = 0 \label{eq:dirichlet}
+\end{equation}
+
+\subsection{Linear System Formation}
+
+The finite difference equations (\ref{eq:interior}), (\ref{eq:neumann}), and (\ref{eq:dirichlet}) form a system of linear equations:
+\begin{equation}
+\mathbf{A}\mathbf{u} = \mathbf{b}
+\end{equation}
+
+where $\mathbf{u} = [u_0, u_1, \ldots, u_{N-1}]^T$ is the solution vector.
+
+The coefficient matrix $\mathbf{A}$ and right-hand side vector $\mathbf{b}$ are constructed as follows:
+
+\begin{itemize}
+\item \textbf{Row 0} (Neumann BC): $A_{0,0} = -1$, $A_{0,1} = 1$, $b_0 = 2\Delta x$
+\item \textbf{Rows 1 to $N-2$} (Interior points): $A_{i,i-1} = 1$, $A_{i,i} = -2$, $A_{i,i+1} = 1$, $b_i = 0$
+\item \textbf{Row $N-1$} (Dirichlet BC): $A_{N-1,N-1} = 1$, $b_{N-1} = 0$
+\end{itemize}
+
+\section{Implementation Details}
+
+The solution is implemented in Python using the following key steps:
+
+\begin{enumerate}
+\item Create a uniform grid with $N$ points
+\item Construct the coefficient matrix $\mathbf{A}$ and right-hand side vector $\mathbf{b}$
+\item Solve the linear system using NumPy's \texttt{linalg.solve()} function
+\item Compare with the analytical solution for validation
+\end{enumerate}
+
+\section{Error Analysis}
+
+The finite difference method introduces discretization error that depends on the grid spacing $\Delta x$. For the second-order central difference scheme used for interior points, the truncation error is $O((\Delta x)^2)$.
+
+The forward difference approximation for the Neumann boundary condition introduces a first-order error $O(\Delta x)$, which can limit the overall accuracy of the scheme.
+
+\section{Results}
+
+The numerical solution converges to the analytical solution as the grid is refined. Key observations:
+
+\begin{itemize}
+\item The method accurately captures the linear nature of the solution
+\item Boundary conditions are satisfied to machine precision
+\item The error decreases as the number of grid points increases
+\item The solution exhibits the expected linear profile: $u(x) = 2(x - L)$
+\end{itemize}
+
+\section{Conclusion}
+
+The finite difference method provides an effective approach for solving the one-dimensional Laplace equation with mixed boundary conditions. The implementation successfully handles both Neumann and Dirichlet boundary conditions, producing results that agree well with the analytical solution.
+
+The method can be easily extended to:
+\begin{itemize}
+\item Non-uniform grids
+\item Higher-order finite difference schemes
+\item Time-dependent problems
+\item Multi-dimensional domains
+\end{itemize}
+
+\section{Code Listing}
+
+The complete Python implementation is provided in the file \texttt{laplace\_1d\_solver.py}, which includes:
+\begin{itemize}
+\item Grid generation and matrix assembly
+\item Linear system solution
+\item Analytical solution comparison
+\item Visualization and error analysis
+\item Boundary condition verification
+\end{itemize}
+
+\end{document}
