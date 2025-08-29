@@ -1,0 +1,30 @@
+EFE Prompts
+
+1) Develop an Eigenfunction Expansion solution for a 2D electromagnetic problem with a plane wave incident on a perfectly conducting cylinder of radius b centered at (0,0). The polarization is for Ez. Use a cylindrical coordinate system in r,phi and z.
+
+2) Create three plots using subplot for 1) the incident field (real part), 2) Scattered fields (real part), 3) Total fields (real part).
+
+3) Set the aspect ratio of the plots to that of the region. And save the figure as png.
+
+
+1D Laplace 
+
+1) For laplace's equation for the function u(x) develop a 1D finite difference solution for the BC du/dx(0) = 2 and u(L) = 0. Create a matlab program that solves the problem. It should produce two plots 1) a description of the geometry and descritization and 2) The solution
+
+2D Laplace 
+
+1) For a cylindrical 2d configuration using r and phi solve the harmonic wave equation with the BC u(r=R,phi) = 0 using finite difference. Create a latex document showing the formulation and a matlab program with 2 figures 1) showing the geometry and 2 presenting 8 solved modes in a figure with 2X4  subplots. 
+
+2) Arrays have incompatible sizes for this operation.
+
+Error in pol2cart (line 23)
+x = r.*cos(th);
+     ^
+Error in WaveCyl (line 77)
+[X, Y] = pol2cart(repmat(phi, [Nr 1]), repmat(r_full', [1 Nphi]));
+
+3) The surface plots are missing a slice at the end. Looks like a fence post error.
+
+4) Make the 2nd figure 4 times wider.
+
+5) For the 2nd figure use [777 383 1784 855] for the position and size. Create a 3rd figure that plots the eigenvalues
