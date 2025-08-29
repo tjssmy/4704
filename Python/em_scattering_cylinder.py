@@ -109,7 +109,7 @@ class EMScattering:
         
         # Mask for points outside cylinder
         outside_mask = r > self.b
-        
+
         if np.any(outside_mask):
             n_terms = max(20, int(2 * self.kb + 10))
             

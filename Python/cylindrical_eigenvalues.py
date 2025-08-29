@@ -113,9 +113,9 @@ def plot_comparison_and_modes():
     # Create visualization
     fig = plt.figure(figsize=(16, 10))
     
-    # Create coordinate grids for plotting
-    nr_plot = 80
-    nphi_plot = 100
+    # Create coordinate grids for plotting (reduced resolution for speed)
+    nr_plot = 50  # Reduced from 80
+    nphi_plot = 64  # Reduced from 100, power of 2 for FFT efficiency
     r_plot = np.linspace(0, R, nr_plot)
     phi_plot = np.linspace(0, 2*np.pi, nphi_plot)
     R_mesh, PHI_mesh = np.meshgrid(r_plot, phi_plot)
@@ -134,32 +134,26 @@ def plot_comparison_and_modes():
         # Get analytical mode
         k_mn = analytical[m][n-1]
         
-        # Create 2D mode shape
-        U = np.zeros_like(R_mesh)
-        for i in range(nr_plot):
-            for j in range(nphi_plot):
-                r_val = r_plot[i]
-                phi_val = phi_plot[j]
-                
-                if r_val == 0:
-                    if m == 0:
-                        radial = 1.0
-                    else:
-                        radial = 0.0
-                else:
-                    radial = jv(m, k_mn * r_val)
-                
-                if m == 0:
-                    angular = 1.0
-                else:
-                    angular = np.cos(m * phi_val)
-                
-                U[j, i] = radial * angular
+        # Vectorized computation of mode shape
+        if m == 0:
+            angular = np.ones_like(PHI_mesh)
+        else:
+            angular = np.cos(m * PHI_mesh)
+        
+        # Handle r=0 case
+        radial = np.zeros_like(R_mesh)
+        nonzero_r = R_mesh > 0
+        radial[nonzero_r] = jv(m, k_mn * R_mesh[nonzero_r])
+        if m == 0:
+            radial[R_mesh == 0] = 1.0
+        
+        U = radial * angular
         
         # Plot
-        levels = np.linspace(-1, 1, 21)
+        levels = np.linspace(-1, 1, 11)  # Reduced from 21 to 11 levels
         im = ax.contourf(X_mesh, Y_mesh, U, levels=levels, cmap='RdBu_r', extend='both')
-        ax.contour(X_mesh, Y_mesh, U, levels=10, colors='black', alpha=0.3, linewidths=0.5)
+        # Remove contour lines for speed
+        # ax.contour(X_mesh, Y_mesh, U, levels=10, colors='black', alpha=0.3, linewidths=0.5)
         
         # Add boundary
         theta = np.linspace(0, 2*np.pi, 100)
@@ -185,7 +179,7 @@ def plot_comparison_and_modes():
     plt.suptitle('Cylindrical Wave Modes: Analytical Solutions\n∇²u = -k²u, u(R,φ) = 0', 
                  fontsize=14, fontweight='bold')
     plt.tight_layout()
-    plt.savefig('eigenvalues_cylindrical.png', dpi=300, bbox_inches='tight')
+    plt.savefig('eigenvalues_cylindrical.png', dpi=150, bbox_inches='tight')  # Reduced DPI for faster saving
     plt.show()
 
 if __name__ == "__main__":
